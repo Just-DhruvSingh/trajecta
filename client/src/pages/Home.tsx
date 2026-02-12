@@ -56,7 +56,7 @@ export default function Home() {
         <div className="flex gap-4">
           {!isAuthenticated && (
             <Button asChild variant="outline">
-              <a href={getLoginUrl()}>Sign In</a>
+              <a href={getLoginUrl()} onClick={(e) => getLoginUrl() === "#" && e.preventDefault()}>Sign In</a>
             </Button>
           )}
         </div>
@@ -117,7 +117,11 @@ export default function Home() {
                 size="lg"
                 className="bg-black hover:bg-gray-900 text-white font-bold px-8 py-6 text-lg"
               >
-                <a href={getLoginUrl()} className="flex items-center gap-2">
+                <a 
+                  href={getLoginUrl()} 
+                  className="flex items-center gap-2"
+                  onClick={(e) => getLoginUrl() === "#" && e.preventDefault()}
+                >
                   <Github className="w-5 h-5" />
                   Connect with GitHub
                 </a>
