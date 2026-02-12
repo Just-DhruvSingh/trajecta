@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trajecta</title>
+    <script>
+      const url = new URL(window.location.href);
+      const repoPrefix = url.pathname.split("/").filter(Boolean)[0] ?? "";
+      const docsBase = `/${repoPrefix ? `${repoPrefix}/` : ""}docs/`;
+      const redirectTo = `${url.origin}${docsBase}?/${url.pathname
+        .split("/")
+        .filter(Boolean)
+        .slice(repoPrefix ? 1 : 0)
+        .join("/")}${url.search}${url.hash}`;
+      window.location.replace(redirectTo);
+    </script>
+  </head>
+  <body></body>
+</html>
