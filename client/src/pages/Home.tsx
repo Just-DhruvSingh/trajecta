@@ -8,6 +8,9 @@ import { Github, TrendingUp, Zap, BarChart3, Brain } from "lucide-react";
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const isGitHubPages =
+    typeof window !== "undefined" &&
+    window.location.hostname.endsWith("github.io");
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -21,8 +24,18 @@ export default function Home() {
       <div className="absolute inset-0 opacity-5">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="black" strokeWidth="0.5" />
+            <pattern
+              id="grid"
+              width="40"
+              height="40"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 40 0 L 0 0 0 40"
+                fill="none"
+                stroke="black"
+                strokeWidth="0.5"
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -32,16 +45,50 @@ export default function Home() {
       {/* Decorative geometric shapes */}
       <div className="absolute top-20 right-10 w-64 h-64 opacity-10">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="100,10 190,190 10,190" fill="none" stroke="#06b6d4" strokeWidth="2" />
-          <circle cx="100" cy="100" r="50" fill="none" stroke="#ec4899" strokeWidth="2" />
+          <polygon
+            points="100,10 190,190 10,190"
+            fill="none"
+            stroke="#06b6d4"
+            strokeWidth="2"
+          />
+          <circle
+            cx="100"
+            cy="100"
+            r="50"
+            fill="none"
+            stroke="#ec4899"
+            strokeWidth="2"
+          />
         </svg>
       </div>
 
       <div className="absolute bottom-20 left-10 w-80 h-80 opacity-10">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <rect x="20" y="20" width="160" height="160" fill="none" stroke="#06b6d4" strokeWidth="2" />
-          <line x1="100" y1="20" x2="100" y2="180" stroke="#ec4899" strokeWidth="1" />
-          <line x1="20" y1="100" x2="180" y2="100" stroke="#ec4899" strokeWidth="1" />
+          <rect
+            x="20"
+            y="20"
+            width="160"
+            height="160"
+            fill="none"
+            stroke="#06b6d4"
+            strokeWidth="2"
+          />
+          <line
+            x1="100"
+            y1="20"
+            x2="100"
+            y2="180"
+            stroke="#ec4899"
+            strokeWidth="1"
+          />
+          <line
+            x1="20"
+            y1="100"
+            x2="180"
+            y2="100"
+            stroke="#ec4899"
+            strokeWidth="1"
+          />
         </svg>
       </div>
 
@@ -56,7 +103,14 @@ export default function Home() {
         <div className="flex gap-4">
           {!isAuthenticated && (
             <Button asChild variant="outline">
-              <a href={getLoginUrl()} onClick={(e) => getLoginUrl() === "#" && e.preventDefault()}>Sign In</a>
+              <a
+                href={getLoginUrl()}
+                onClick={e => getLoginUrl() === "#" && e.preventDefault()}
+              >
+                {isGitHubPages
+                  ? "Sign In (disabled on GitHub Pages)"
+                  : "Sign In"}
+              </a>
             </Button>
           )}
         </div>
@@ -77,7 +131,9 @@ export default function Home() {
               </h2>
 
               <p className="text-xl text-gray-700 mb-8 leading-relaxed font-light">
-                Trajecta analyzes your GitHub activity to reveal your learning patterns, consistency, and growth trajectory. Get AI-powered insights into your development journey.
+                Trajecta analyzes your GitHub activity to reveal your learning
+                patterns, consistency, and growth trajectory. Get AI-powered
+                insights into your development journey.
               </p>
 
               <div className="space-y-4 mb-12">
@@ -86,8 +142,13 @@ export default function Home() {
                     <span className="text-white text-sm font-bold">✓</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-1">Real-time Analytics</h3>
-                    <p className="text-gray-600 text-sm">Track commits, languages, and project metrics automatically</p>
+                    <h3 className="font-bold text-black mb-1">
+                      Real-time Analytics
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Track commits, languages, and project metrics
+                      automatically
+                    </p>
                   </div>
                 </div>
 
@@ -96,8 +157,12 @@ export default function Home() {
                     <span className="text-white text-sm font-bold">✓</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-1">AI-Powered Insights</h3>
-                    <p className="text-gray-600 text-sm">Get personalized recommendations for skill development</p>
+                    <h3 className="font-bold text-black mb-1">
+                      AI-Powered Insights
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Get personalized recommendations for skill development
+                    </p>
                   </div>
                 </div>
 
@@ -106,8 +171,12 @@ export default function Home() {
                     <span className="text-white text-sm font-bold">✓</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-1">Growth Metrics</h3>
-                    <p className="text-gray-600 text-sm">Consistency score, learning velocity, and depth analysis</p>
+                    <h3 className="font-bold text-black mb-1">
+                      Growth Metrics
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Consistency score, learning velocity, and depth analysis
+                    </p>
                   </div>
                 </div>
               </div>
@@ -117,13 +186,15 @@ export default function Home() {
                 size="lg"
                 className="bg-black hover:bg-gray-900 text-white font-bold px-8 py-6 text-lg"
               >
-                <a 
-                  href={getLoginUrl()} 
+                <a
+                  href={getLoginUrl()}
                   className="flex items-center gap-2"
-                  onClick={(e) => getLoginUrl() === "#" && e.preventDefault()}
+                  onClick={e => getLoginUrl() === "#" && e.preventDefault()}
                 >
                   <Github className="w-5 h-5" />
-                  Connect with GitHub
+                  {isGitHubPages
+                    ? "GitHub Pages demo mode"
+                    : "Connect with GitHub"}
                 </a>
               </Button>
             </div>
@@ -136,8 +207,12 @@ export default function Home() {
                     <TrendingUp className="w-6 h-6 text-cyan-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-2">Skill Growth Timeline</h3>
-                    <p className="text-sm text-gray-600">Visualize how your programming skills evolve over time</p>
+                    <h3 className="font-bold text-black mb-2">
+                      Skill Growth Timeline
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Visualize how your programming skills evolve over time
+                    </p>
                   </div>
                 </div>
               </div>
@@ -148,8 +223,12 @@ export default function Home() {
                     <Zap className="w-6 h-6 text-pink-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-2">Consistency Score</h3>
-                    <p className="text-sm text-gray-600">Measure your commit frequency and development consistency</p>
+                    <h3 className="font-bold text-black mb-2">
+                      Consistency Score
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Measure your commit frequency and development consistency
+                    </p>
                   </div>
                 </div>
               </div>
@@ -160,8 +239,12 @@ export default function Home() {
                     <BarChart3 className="w-6 h-6 text-cyan-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-2">Depth vs Breadth</h3>
-                    <p className="text-sm text-gray-600">Understand your specialization vs diversification balance</p>
+                    <h3 className="font-bold text-black mb-2">
+                      Depth vs Breadth
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Understand your specialization vs diversification balance
+                    </p>
                   </div>
                 </div>
               </div>
@@ -172,8 +255,12 @@ export default function Home() {
                     <Brain className="w-6 h-6 text-pink-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black mb-2">AI Recommendations</h3>
-                    <p className="text-sm text-gray-600">Personalized growth suggestions based on your patterns</p>
+                    <h3 className="font-bold text-black mb-2">
+                      AI Recommendations
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Personalized growth suggestions based on your patterns
+                    </p>
                   </div>
                 </div>
               </div>

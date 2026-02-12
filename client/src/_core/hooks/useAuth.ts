@@ -11,11 +11,15 @@ type UseAuthOptions = {
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
+  const isGitHubPages =
+    typeof window !== "undefined" &&
+    window.location.hostname.endsWith("github.io");
   const utils = trpc.useUtils();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
+    enabled: !isGitHubPages,
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -25,6 +29,11 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
+    if (isGitHubPages) {
+      utils.auth.me.setData(undefined, null);
+      return;
+    }
+
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
@@ -39,7 +48,7 @@ export function useAuth(options?: UseAuthOptions) {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
-  }, [logoutMutation, utils]);
+  }, [isGitHubPages, logoutMutation, utils]);
 
   const state = useMemo(() => {
     localStorage.setItem(
@@ -67,7 +76,7 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
 
-    window.location.href = redirectPath
+    window.location.href = redirectPath;
   }, [
     redirectOnUnauthenticated,
     redirectPath,
