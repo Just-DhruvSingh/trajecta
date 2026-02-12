@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and, desc, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, repositories, commits, languageProficiency, dailyAnalytics, userMetrics, aiInsights, emailNotifications } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,288 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// GitHub integration functions
+export async function updateUserGitHubData(userId: number, githubData: {
+  githubId: string;
+  githubUsername: string;
+  githubAccessToken: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(users)
+    .set({
+      githubId: githubData.githubId,
+      githubUsername: githubData.githubUsername,
+      githubAccessToken: githubData.githubAccessToken,
+      githubConnected: true,
+      lastGitHubSync: new Date(),
+    })
+    .where(eq(users.id, userId));
+}
+
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Repository operations
+export async function upsertRepositories(userId: number, repos: Array<{
+  githubRepoId: string;
+  name: string;
+  url: string;
+  description?: string;
+  language?: string;
+  stars: number;
+  forks: number;
+  size: number;
+  isPrivate: boolean;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  for (const repo of repos) {
+    await db.insert(repositories)
+      .values({
+        userId,
+        ...repo,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          stars: repo.stars,
+          forks: repo.forks,
+          size: repo.size,
+          updatedAt: new Date(),
+        },
+      });
+  }
+}
+
+export async function getUserRepositories(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(repositories).where(eq(repositories.userId, userId));
+}
+
+// Commit operations
+export async function upsertCommits(userId: number, commitData: Array<{
+  repositoryId: number;
+  commitHash: string;
+  message?: string;
+  authorName?: string;
+  authorEmail?: string;
+  committedAt: Date;
+  additions: number;
+  deletions: number;
+  filesChanged: number;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  for (const commit of commitData) {
+    await db.insert(commits)
+      .values({
+        userId,
+        ...commit,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          message: commit.message,
+        },
+      });
+  }
+}
+
+export async function getUserCommits(userId: number, days: number = 365) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  return db.select()
+    .from(commits)
+    .where(and(
+      eq(commits.userId, userId),
+      gte(commits.committedAt, cutoffDate)
+    ))
+    .orderBy(desc(commits.committedAt));
+}
+
+// Language proficiency operations
+export async function upsertLanguageProficiency(userId: number, language: string, data: {
+  commitCount: number;
+  repositoryCount: number;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await db.select()
+    .from(languageProficiency)
+    .where(and(
+      eq(languageProficiency.userId, userId),
+      eq(languageProficiency.language, language)
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    await db.update(languageProficiency)
+      .set({
+        commitCount: data.commitCount,
+        repositoryCount: data.repositoryCount,
+        lastSeenAt: data.lastSeenAt,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(languageProficiency.userId, userId),
+        eq(languageProficiency.language, language)
+      ));
+  } else {
+    await db.insert(languageProficiency)
+      .values({
+        userId,
+        language,
+        ...data,
+      });
+  }
+}
+
+export async function getUserLanguages(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(languageProficiency)
+    .where(eq(languageProficiency.userId, userId))
+    .orderBy(desc(languageProficiency.commitCount));
+}
+
+// Daily analytics operations
+export async function recordDailyAnalytics(userId: number, date: Date, data: {
+  commitsCount: number;
+  repositoriesCount: number;
+  languagesCount: number;
+  totalAdditions: number;
+  totalDeletions: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(dailyAnalytics)
+    .values({
+      userId,
+      date,
+      ...data,
+    });
+}
+
+// User metrics operations
+export async function upsertUserMetrics(userId: number, metrics: {
+  consistencyScore: number;
+  skillGrowthTrend: number;
+  learningVelocity: number;
+  projectDepth: number;
+  depthBreadthRatio: number;
+  totalCommits: number;
+  totalRepositories: number;
+  uniqueLanguages: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const metricsData = {
+    consistencyScore: metrics.consistencyScore.toString(),
+    skillGrowthTrend: metrics.skillGrowthTrend.toString(),
+    learningVelocity: metrics.learningVelocity.toString(),
+    projectDepth: metrics.projectDepth.toString(),
+    depthBreadthRatio: metrics.depthBreadthRatio.toString(),
+    totalCommits: metrics.totalCommits,
+    totalRepositories: metrics.totalRepositories,
+    uniqueLanguages: metrics.uniqueLanguages,
+  };
+
+  await db.insert(userMetrics)
+    .values({
+      userId,
+      ...metricsData,
+      lastCalculatedAt: new Date(),
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        ...metricsData,
+        lastCalculatedAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+}
+
+export async function getUserMetrics(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(userMetrics)
+    .where(eq(userMetrics.userId, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+// AI insights operations
+export async function storeAIInsights(userId: number, insights: {
+  insights: Array<{ title: string; description: string }>;
+  recommendations: Array<{ area: string; suggestion: string; priority: string }>;
+  summary: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(aiInsights)
+    .values({
+      userId,
+      insights: JSON.stringify(insights.insights),
+      recommendations: JSON.stringify(insights.recommendations),
+      summary: insights.summary,
+      generatedAt: new Date(),
+    });
+}
+
+export async function getLatestAIInsights(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(aiInsights)
+    .where(eq(aiInsights.userId, userId))
+    .orderBy(desc(aiInsights.generatedAt))
+    .limit(1);
+
+  if (result.length > 0) {
+    const insight = result[0];
+    return {
+      ...insight,
+      insights: JSON.parse(insight.insights as string),
+      recommendations: JSON.parse(insight.recommendations as string),
+    };
+  }
+
+  return null;
+}
+
+// Email notification operations
+export async function recordEmailNotification(userId: number, type: 'weekly_summary' | 'monthly_summary', content: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(emailNotifications)
+    .values({
+      userId,
+      type,
+      sentAt: new Date(),
+      status: 'sent',
+      content: JSON.stringify(content),
+    });
+}
